@@ -32,7 +32,7 @@ for est_code in preds_cod:
         series[key] = cargar_valores_observados(est_code, sigla, fecha_inicial, fecha_final, return_type="Series")
 
 for b_key in base_keys:
-    for i in range(1,10):
+    for i in range(1,max_lag):
         # First shifts
         series["{}-Lag{}".format(b_key,i)] = series[b_key].shift(i)
     if b_key != target:
@@ -49,6 +49,6 @@ ordered_columns[target_col_index] = ordered_columns[-1] # Replace  by last exist
 ordered_columns.pop() # And removed not used!
 cleaned_data['Ones'] = Series(np.ones(cleaned_data.shape[0]), index=cleaned_data.index)
 ordered_data = cleaned_data[ordered_columns+['Ones',target]].sort_index(ascending=False) # Recent data is most relevant
-data_window = 300
+data_window = 100
 ordered_data = ordered_data[:data_window]
 ordered_data.to_csv("/tmp/pronos_ordered_cleaned.csv", index=False)

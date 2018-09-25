@@ -1,4 +1,6 @@
 from itertools import combinations
+from time import time
+
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
 
@@ -163,7 +165,7 @@ def _get_max_batch_size(cols, n_data):
     return max_batch
 
 
-def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, handle=None):
+def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, metric=None,  window=None, handle=None):
     """
 
     :param file_name: File name containing data, the format is the following
@@ -176,6 +178,7 @@ def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', ma
     :param max_predictors: Max numbers of predictors to test in the regression. Should b N-2 at max
     :return: Ordered array (by RMSE) of tuples containing (predictors_combination, RMSE)
     """
+    tt = te = 0 # total time
     handle = handle if handle else cublas.cublasCreate()
     XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=np.float32)
     X = np.delete(XY, XY.shape[1] - 1, 1)
@@ -193,29 +196,31 @@ def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', ma
         for i in range(0, len(index_combinations), max_batch_size):
             end_combination = i + max_batch_size if len(index_combinations)>=i + max_batch_size else len(index_combinations)
             print "Processing from {} to {} regressions in this batch".format(i, end_combination)
+            ss = time()
             Xs = get_X_matrices_from_combinations(X, index_combinations[i:end_combination])
             XTs = get_Xt_matrices_from_combinations(X.T, index_combinations[i:end_combination])
             YsObs = get_Ys_matrices(Y, len(index_combinations[i:end_combination]))
+            te += time() - ss
+            ss = time()
             regression_results = massive_multilineal_regresion(Xs, XTs, YsObs, handle=handle)
-            regression_results['predictors_combinations'] = np.array(index_combinations[i:end_combination], dtype=np.int32)
+            tt += time() - ss
+            # regression_results['predictors_combinations'] = np.array(index_combinations[i:end_combination], dtype=np.int32)
             # If the matrix had not inverse then the model is invalid
             invalid_models = np.where(regression_results['inv_results'].get() != 0)[0]
             print "For this batch {} models are invalid".format(len(invalid_models))
             # Cleaning invalid model results
-            regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
-            regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
-            regression_results['rmse'] = np.delete(regression_results['rmse'], invalid_models, 0)
-            regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
-            regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
-            combinations_cols_names = np.array([col_names[x] for x in regression_results['predictors_combinations']])
-            if combs_rmse is None:
-                combs_rmse = np.array(list(zip(combinations_cols_names, regression_results['rmse'])))
-            else:
-                combs_rmse = np.concatenate((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
+            # regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
+            # regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
+            # regression_results['rmse'] = np.delete(regression_results['rmse'], invalid_models, 0)
+            # regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
+            # regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
+            # combinations_cols_names = np.array([col_names[x] for x in regression_results['predictors_combinations']])
+            #if combs_rmse is None:
+            #    combs_rmse = np.array(list(zip(combinations_cols_names, regression_results['rmse'])))
+            #else:
+            #    combs_rmse = np.concatenate((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
         done_regressions += len(index_combinations)
-    print "{} Regressions has been done".format(done_regressions)
+    print "{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te)
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs
 
-_print_memory_usage("Initial State: ")
-ordered_combs = find_best_models(file_name="/tmp/pronos_ordered_cleaned.csv", max_predictors=5)

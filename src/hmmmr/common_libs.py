@@ -1,6 +1,9 @@
-from pycuda import cumath, driver, gpuarray, tools
-from pycuda.elementwise import ElementwiseKernel
 import numpy as np
-from scikits.cuda import cublas
-from skcuda import linalg
-import pycuda.autoinit
+
+try:
+    from pycuda import cumath, driver, gpuarray, tools
+    from pycuda.elementwise import ElementwiseKernel
+    from scikits.cuda import cublas
+    import pycuda.autoinit
+except Exception as e:
+    print "Exception raised when loading pycuda libraries"
