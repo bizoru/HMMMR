@@ -178,7 +178,7 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
                 i += 1
             except:
                 invalid_regressions += 1
-        done_regressions += len(s_i)
+        done_regressions += s_i
     print "{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions)
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return combs_rmse
