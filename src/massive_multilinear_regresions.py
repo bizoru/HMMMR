@@ -23,12 +23,16 @@ def parse_arguments():
                         help="Metric to be calculated for the possible model")
     parser.add_argument('-d', dest="device", default="gpu",
                         help="Device to use to perform calculations")
+    parser.add_argument('-b', dest="max_batch_size", default=None,
+                        help="Size of batch to process")
 
     args = parser.parse_args()
 
     input_file = args.input_file
     window = args.window
     max_predictors = args.max_predictors
+    max_batch_size = args.max_batch_size
+
     output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}.csv".format(input_file, window, max_predictors)
     metric = args.metric
     device = args.device
@@ -37,17 +41,17 @@ def parse_arguments():
         parser.print_help()
         sys.exit(0)
 
-    return input_file, int(window), int(max_predictors), metric, output_file, device
+    return input_file, int(window), int(max_predictors), metric, output_file, device, max_batch_size
 
 
 # _print_memory_usage("Initial State: ")
 @do_profile(follow=[find_best_models_gpu])
 def perform_regressions():
     start_time = time()
-    input_file, window, max_predictors, metric, output_file, device = parse_arguments()
+    input_file, window, max_predictors, metric, output_file, device, max_batch_size = parse_arguments()
     if device == "gpu":
         print "Running calculations on GPU"
-        ordered_combs = find_best_models_gpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window)
+        ordered_combs = find_best_models_gpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
     print "Using GPU to do regressions took {}".format(time() - start_time)
 
 perform_regressions()
