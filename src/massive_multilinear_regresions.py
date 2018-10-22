@@ -6,6 +6,7 @@ import os
 from time import time
 
 from batched_regression import _print_memory_usage, find_best_models_gpu
+from numpy_multiple_regression import find_best_models_cpu
 
 from hmmmr.utils.profiling import do_profile
 
@@ -52,6 +53,9 @@ def perform_regressions():
     if device == "gpu":
         print "Running calculations on GPU"
         ordered_combs = find_best_models_gpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
-    print "Using GPU to do regressions took {}".format(time() - start_time)
+        print "Using GPU to do regressions took {}".format(time() - start_time)
+    elif device == "cpu":
+        ordered_combs = find_best_models_cpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
+
 
 perform_regressions()

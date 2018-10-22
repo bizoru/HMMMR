@@ -3,6 +3,7 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
+from src.hmmmr.utils.math import ncr
 
 FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
@@ -16,10 +17,8 @@ def get_column_index_combinations(X, n=3):
     """
     columns_index = range(X.shape[1])
     combs = combinations(columns_index, n)
-    full_combs = []
     for c in combs:
-        full_combs.append(list(c) + [columns_index[-1]])
-    return full_combs
+        yield c
 
 
 def get_X_matrices_from_combinations(X, index_combinations):
@@ -135,12 +134,13 @@ def numpy_regression(X, comb, Y):
     Ysim = np.dot(X1, B)
     metric = rmse(Y, Ysim)
     return {
-        'rmse': metric,
+        'metric': metric,
         'beta_coefficients': B,
         'ys_sim': Ysim
     }
 
-def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, handle=None):
+
+def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, handle=None):
     """
 
     :param file_name: File name containing data, the format is the following
@@ -164,16 +164,23 @@ def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', ma
         col_names = np.array(f.readline().strip().split(','))
     for n_predictors in range(1, max_predictors):
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
-        print "Doing regressions for {} predictors ({} regressions)".format(n_predictors, len(index_combinations))
+        s_i = ncr(X.shape[1], n_predictors)  # Number of possible combinations
+        print "Doing regressions for {} predictors ({} regressions".format(n_predictors, s_i)
         for comb in index_combinations:
             try:
-                numpy_regression(X, comb, Y)
+                regression = numpy_regression(X, comb, Y)
+                combinations_cols_names = np.array([col_names[x] for x in comb])
+                result = np.array(combinations_cols_names, regression['metric'])
+                if combs_rmse is None:
+                    combs_rmse = np.array(list(result))
+                else:
+                    combs_rmse = np.concatenate(combs_rmse, result)
+                i += 1
             except:
                 invalid_regressions += 1
-        done_regressions += len(index_combinations)
-
+        done_regressions += len(s_i)
     print "{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions)
-    return None
+    return combs_rmse
 
 
 """
