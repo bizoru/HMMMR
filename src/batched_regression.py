@@ -3,7 +3,7 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
-from hmmmr.utils import ncr
+from hmmmr.utils.math import ncr
 
 FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
@@ -16,7 +16,7 @@ def get_combinatorial_iterator(X, n=3):
     combs = combinations(columns_index, n)
     return combs
 
-def get_column_index_combinations(X, iterator, max_batch_size=1000):
+def get_column_index_combinations(iterator, X, max_batch_size=1000):
     """
     Generates a list of possible predictor combinations, note the last column will be included since it  is the constant var
     :param X: Matrix with predictors data
@@ -30,8 +30,6 @@ def get_column_index_combinations(X, iterator, max_batch_size=1000):
         current_combs.append(list(c) + [columns_index[-1]])
         if counter == max_batch_size:
             yield current_combs
-        if counter < max_batch_size:
-            current_combs.append(list(c) + [columns_index[-1]])
         counter += 1
     yield current_combs
 
@@ -236,7 +234,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             else:
                combs_rmse = np.concatenate((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
             i += len(current_combinations)
-        done_regressions += len(index_combinations)
+        done_regressions += len(current_combinations)
     print "{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te)
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs
