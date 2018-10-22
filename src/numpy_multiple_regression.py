@@ -175,13 +175,15 @@ def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', ma
     print "{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions)
     return None
 
+
+"""
 start_time = time()
 ordered_combs = find_best_models(file_name="/tmp/pronos_ordered_cleaned.csv", max_predictors=10)
 print "Using numpy to do regressions took {}".format(time() - start_time)
 
 
 
-"""
+
             regression_results = {}
             regression_results['predictors_combinations'] = np.array(index_combinations[i:end_combination], dtype=np.int32)
             # If the matrix had not inverse then the model is invalid
