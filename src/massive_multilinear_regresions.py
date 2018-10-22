@@ -7,6 +7,7 @@ from time import time
 
 from batched_regression import _print_memory_usage, find_best_models_gpu
 
+from hmmmr.utils.profiling import do_profile
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -40,10 +41,13 @@ def parse_arguments():
 
 
 # _print_memory_usage("Initial State: ")
-start_time = time()
-input_file, window, max_predictors, metric, output_file, device = parse_arguments()
-if device == "gpu":
-    print "Running calculations on GPU"
-    ordered_combs = find_best_models_gpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window)
-    "Should dump to output_file=output_file"
-print "Using GPU to do regressions took {}".format(time() - start_time)
+@do_profile(follow=[find_best_models_gpu])
+def perform_regressions():
+    start_time = time()
+    input_file, window, max_predictors, metric, output_file, device = parse_arguments()
+    if device == "gpu":
+        print "Running calculations on GPU"
+        ordered_combs = find_best_models_gpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window)
+    print "Using GPU to do regressions took {}".format(time() - start_time)
+
+perform_regressions()
