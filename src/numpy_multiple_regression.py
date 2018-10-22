@@ -140,7 +140,7 @@ def numpy_regression(X, comb, Y):
     }
 
 
-def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, handle=None):
+def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, handle=None, **kwargs):
     """
 
     :param file_name: File name containing data, the format is the following
