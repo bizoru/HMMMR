@@ -118,11 +118,27 @@ def massive_multilineal_regresion(Xs, XTs, Ys, handle=None):
     return results
 
 
-
-
 def rmse(predictions, targets):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
+
+def numpy_regression(X, comb, Y):
+    X1 = X[:, comb]
+    X1t = X1.T
+    dot1 = np.dot(X1t, X1)
+    invThing = np.linalg.inv(dot1)
+    del (dot1)
+    dot2 = np.dot(X1t, Y)
+    B = np.dot(invThing, dot2)
+    del (dot2)
+    del (invThing)
+    Ysim = np.dot(X1, B)
+    metric = rmse(Y, Ysim)
+    return {
+        'rmse': metric,
+        'beta_coefficients': B,
+        'ys_sim': Ysim
+    }
 
 def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, handle=None):
     """
@@ -150,18 +166,8 @@ def find_best_models(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', ma
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
         print "Doing regressions for {} predictors ({} regressions)".format(n_predictors, len(index_combinations))
         for comb in index_combinations:
-            X1 = X[:, comb]
-            X1t = X1.T
             try:
-                dot1 = np.dot(X1t, X1)
-                invThing = np.linalg.inv(dot1)
-                del(dot1)
-                dot2 = np.dot(X1t, Y)
-                B = np.dot(invThing, dot2)
-                del(dot2)
-                del(invThing)
-                Ysim = np.dot(X1, B)
-                metric = rmse(Y, Ysim)
+                numpy_regression(X, comb, Y)
             except:
                 invalid_regressions += 1
         done_regressions += len(index_combinations)
