@@ -179,7 +179,7 @@ def _get_max_batch_size(cols, n_data):
     return max_batch
 
 
-def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, metric=None,  window=None, handle=None, max_batch_size=None):
+def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, metric=None,  window=None, handle=None, max_batch_size=None, **kwargs):
     """
 
     :param file_name: File name containing data, the format is the following
