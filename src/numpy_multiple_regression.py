@@ -3,7 +3,7 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
-from src.hmmmr.utils.math import ncr
+from hmmmr.utils.math import ncr
 
 FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
