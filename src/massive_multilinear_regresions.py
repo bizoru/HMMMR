@@ -48,7 +48,7 @@ def parse_arguments():
 
 
 # _print_memory_usage("Initial State: ")
-@do_profile(follow=[find_best_models_gpu])
+@do_profile(follow=[find_best_models_gpu, find_best_models_cpu])
 def perform_regressions():
     start_time = time()
     input_file, window, max_predictors, metric, output_file, device, max_batch_size = parse_arguments()
