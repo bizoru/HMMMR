@@ -9,10 +9,8 @@ FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
 
 
-
-
 def get_combinatorial_iterator(X, n=3):
-    columns_index = range(X.shape[1])
+    columns_index = range(X.shape[1] - 1)
     combs = combinations(columns_index, n)
     return combs
 
@@ -23,14 +21,18 @@ def get_column_index_combinations(iterator, X, max_batch_size=1000):
     :param n: Number of predictors to include
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
+    max_batch_size = int(max_batch_size)
+    print "Generating {} combs for this batch".format(max_batch_size)
     columns_index = range(X.shape[1])
     current_combs = []
     counter = 0
     for c in iterator:
         current_combs.append(list(c) + [columns_index[-1]])
-        if counter == max_batch_size:
-            yield current_combs
         counter += 1
+        if counter % max_batch_size == 0:
+            yield current_combs
+            current_combs = []
+	    
     yield current_combs
 
 
@@ -203,7 +205,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         _print_memory_usage("Initial State: ")
         max_batch_size = max_batch_size if max_batch_size else _get_max_batch_size(n_predictors+1, Y.size)
         iterator = get_combinatorial_iterator(X, n_predictors)
-        index_combinations = get_column_index_combinations(iterator, X, max_batch_size) # n predictors - 1 constant
+        index_combinations = get_column_index_combinations(iterator, X, max_batch_size=max_batch_size) # n predictors - 1 constant
         s_i = ncr(X.shape[1], n_predictors) # Number of possible combinations
         print "Doing regressions for {} predictors ({} regressions".format(n_predictors, s_i)
         print "Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size)
