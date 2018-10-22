@@ -10,6 +10,8 @@ from numpy_multiple_regression import find_best_models_cpu
 
 from hmmmr.utils.profiling import do_profile
 
+import pandas as pd
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Performs massive multilinear regresions from the combinatorics of predictors from 1 to MaxPredictors). Selects the best model base on some criteria (RMSE) by default")
@@ -34,7 +36,7 @@ def parse_arguments():
     max_predictors = args.max_predictors
     max_batch_size = args.max_batch_size
 
-    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}.csv".format(input_file, window, max_predictors)
+    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}-{}.csv".format(input_file, window, max_predictors, device)
     metric = args.metric
     device = args.device
 
@@ -56,6 +58,8 @@ def perform_regressions():
         print "Using GPU to do regressions took {}".format(time() - start_time)
     elif device == "cpu":
         ordered_combs = find_best_models_cpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
+    df = pd.DataFrame(ordered_combs)
+    df.to_csv("/tmp/{}".format(output_file))
 
 
 perform_regressions()
