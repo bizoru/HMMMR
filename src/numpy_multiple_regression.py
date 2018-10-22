@@ -54,69 +54,6 @@ def get_Ys_matrices(Y, n):
     return np.array([Y]*n, dtype=Y.dtype).reshape(Ys_shape)
 
 
-
-def massive_multilineal_regresion(Xs, XTs, Ys, handle=None):
-    """
-    Calculates a linear regression using Nvidia computing power!
-        n = number of models
-        d = number of observations
-        c = number of predictors (columns)
-    :param Xs: Shape (n, d, c) =>
-
-    :param XTs: Shape (n, c, d)
-    :param Ys: (n, d, 1)
-    :param handle: Cublas handle (created if not provided)
-    :return: Dict with regressions data
-        # Note is possible some models at this point are invalid
-     {
-        'beta_coefficients': Vector of vectors with beta_coefficients for each model
-        'ys_obs': Y observed data (repeated n times)
-        'ys_sim': Y simulated data for each model
-        'rmse': Vector with RMSE for each model
-        'inv_results': Vector with the result of inverse operation, if not 0 the model is not valid
-     }
-    """
-    handle = handle if handle else cublas.cublasCreate()
-
-    Xs = np.array(Xs, FLOAT_PRECISSION)
-    XTs = np.array(XTs, FLOAT_PRECISSION)
-    YsObs = np.array(Ys, FLOAT_PRECISSION)
-
-    Xs_gpu = gpuarray.to_gpu(Xs.astype(Xs.dtype))
-    XTs_gpu = gpuarray.to_gpu(XTs.astype(XTs.dtype))
-    YsObs_gpu = gpuarray.to_gpu(YsObs.astype(YsObs.dtype))
-    _print_memory_usage("Once loaded Xs Xts YsObs")
-    N_data = Xs.shape[1]
-
-    # Regression
-    XTsXs_gpu = massive_product_row_major(handle, XTs_gpu, Xs_gpu)['Cs_gpu']
-    XTsYs_gpu = massive_product_row_major(handle, XTs_gpu, YsObs_gpu)['Cs_gpu']
-    _print_memory_usage("Once Calculated XsYs XTsXs")
-    del (XTs_gpu)
-
-    # This is where the regression can fail
-    inv_results = massive_inverse_pycuda(handle, XTsXs_gpu)
-    XTsXsInv_gpu = inv_results['Xinvs_gpu']
-    inv_returns = inv_results['return_codes']
-    _print_memory_usage("Once Calculated Inverse")
-    del (XTsXs_gpu)
-    Bs_gpu = massive_product_row_major(handle, XTsXsInv_gpu, XTsYs_gpu)['Cs_gpu']
-    del XTsXsInv_gpu
-    _print_memory_usage("Once Calculated Bs")
-    del (XTsYs_gpu)
-    # Simulations
-    YsSim_gpu = massive_product_row_major(handle, Xs_gpu, Bs_gpu)['Cs_gpu']
-    _print_memory_usage("Once Calculated Ysim")
-    del (Xs_gpu)
-    _print_memory_usage("Before RMSE")
-    rmse_gpu = rmse_metric(YsObs_gpu, YsSim_gpu, N_data, handle)
-    _print_memory_usage("After RMSE")
-
-    results = {'beta_coefficients': Bs_gpu.get(), 'ys_obs': YsObs_gpu.get(),
-               'ys_sim': YsSim_gpu.get(), 'rmse': rmse_gpu.get().flatten(), 'inv_results': inv_returns}
-    return results
-
-
 def rmse(predictions, targets):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
