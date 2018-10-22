@@ -3,9 +3,12 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
+from hmmmr.utils import ncr
 
 FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
+
+
 
 
 def get_combinatorial_iterator(X, n=3):
@@ -203,8 +206,9 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
         iterator = get_combinatorial_iterator(X, n_predictors)
         index_combinations = get_column_index_combinations(iterator, X, max_batch_size) # n predictors - 1 constant
-        print "Doing regressions for {} predictors ({} regressions".format(n_predictors, len(index_combinations))
-        print "Number of possible combinations are {}, batch size is {}".format(len(index_combinations), max_batch_size)
+        s_i = ncr(X.shape[1], n_predictors) # Number of possible combinations
+        print "Doing regressions for {} predictors ({} regressions".format(n_predictors, s_i)
+        print "Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size)
         i = 0
         for current_combinations in index_combinations:
             print "Processing from {} to {} regressions in this batch".format(i, i + len(current_combinations))
