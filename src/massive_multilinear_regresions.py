@@ -35,10 +35,10 @@ def parse_arguments():
     window = args.window
     max_predictors = args.max_predictors
     max_batch_size = args.max_batch_size
-
-    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}-{}.csv".format(input_file, window, max_predictors, device)
     metric = args.metric
     device = args.device
+
+    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}-{}.csv".format(input_file, window, max_predictors, device)
 
     if any(x is None for x in [input_file, window, max_predictors, output_file, metric]):
         parser.print_help()
