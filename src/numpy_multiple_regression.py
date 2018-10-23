@@ -90,7 +90,6 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     :param max_predictors: Max numbers of predictors to test in the regression. Should b N-2 at max
     :return: Ordered array (by RMSE) of tuples containing (predictors_combination, RMSE)
     """
-    handle = handle if handle else cublas.cublasCreate()
     XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=np.float32)
     X = np.delete(XY, XY.shape[1] - 1, 1)
     Y = XY[:, -1]
@@ -107,12 +106,12 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             try:
                 regression = numpy_regression(X, comb, Y)
                 combinations_cols_names = np.array([col_names[x] for x in comb])
-                result = np.array(combinations_cols_names, regression['metric'])
+                result = np.array([[combinations_cols_names, regression['metric']]])
+
                 if combs_rmse is None:
-                    combs_rmse = np.array(list(result))
+                    combs_rmse = result
                 else:
-                    combs_rmse = np.concatenate(combs_rmse, result)
-                i += 1
+                    combs_rmse = np.vstack([combs_rmse, result])
             except:
                 invalid_regressions += 1
         done_regressions += s_i
