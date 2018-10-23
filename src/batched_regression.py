@@ -177,7 +177,7 @@ def _get_max_batch_size(cols, n_data):
     return max_batch
 
 
-def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, metric=None,  window=None, handle=None, max_batch_size=None, **kwargs):
+def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', min_predictors=1, max_predictors=4, metric=None,  window=None, handle=None, max_batch_size=None, **kwargs):
     """
 
     :param file_name: File name containing data, the format is the following
@@ -199,7 +199,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     done_regressions = 0
     with open(file_name, 'rb') as f:
         col_names = np.array(f.readline().strip().split(','))
-    for n_predictors in range(1, max_predictors):
+    for n_predictors in range(min_predictors, max_predictors):
         _print_memory_usage("Initial State: ")
         max_batch_size = max_batch_size if max_batch_size else _get_max_batch_size(n_predictors+1, Y.size)
         iterator = get_combinatorial_iterator(X, n_predictors)
@@ -232,7 +232,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             if combs_rmse is None:
                combs_rmse = np.array(list(zip(combinations_cols_names, regression_results['rmse'])))
             else:
-               combs_rmse = np.concatenate((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
+               combs_rmse = np.vstack((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
             i += len(current_combinations)
         done_regressions += len(current_combinations)
     print "{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te)
