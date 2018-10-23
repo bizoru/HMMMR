@@ -201,7 +201,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         col_names = np.array(f.readline().strip().split(','))
     for n_predictors in range(min_predictors, max_predictors):
         _print_memory_usage("Initial State: ")
-        max_batch_size = max_batch_size if max_batch_size else _get_max_batch_size(n_predictors+1, Y.size)
+        max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
         iterator = get_combinatorial_iterator(X, n_predictors)
         index_combinations = get_column_index_combinations(iterator, X, max_batch_size) # n predictors - 1 constant
         s_i = ncr(X.shape[1], n_predictors) # Number of possible combinations
