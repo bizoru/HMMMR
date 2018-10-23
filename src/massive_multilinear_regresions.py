@@ -19,7 +19,8 @@ def parse_arguments():
                         help="CSV file with predictors data")
     parser.add_argument('-w', dest="window", default=300,
                         help="Window of data to perform regressions.  Recommended: 300 for hourly data, 50 for daily data")
-    parser.add_argument('-n', dest="max_predictors", help="Max numbers of predictors to combine", default=8)
+    parser.add_argument('-mp', dest="max_predictors", help="Max numbers of predictors to combine", default=8)
+    parser.add_argument('-np', dest="min_predictors", help="Min numbers of predictors to combine", default=1)
     parser.add_argument('-o', dest="output_file", default=None,
                         help="Output file with combinations and metrics results")
     parser.add_argument('-m', dest="metric", default="rmse",
@@ -34,6 +35,7 @@ def parse_arguments():
     input_file = args.input_file
     window = args.window
     max_predictors = args.max_predictors
+    min_predictors = args.min_predictors
     max_batch_size = args.max_batch_size
     metric = args.metric
     device = args.device
@@ -44,20 +46,20 @@ def parse_arguments():
         parser.print_help()
         sys.exit(0)
 
-    return input_file, int(window), int(max_predictors), metric, output_file, device, max_batch_size
+    return input_file, int(window), int(max_predictors), int(min_predictors), metric, output_file, device, max_batch_size
 
 
 # _print_memory_usage("Initial State: ")
 @do_profile(follow=[find_best_models_gpu, find_best_models_cpu])
 def perform_regressions():
     start_time = time()
-    input_file, window, max_predictors, metric, output_file, device, max_batch_size = parse_arguments()
+    input_file, window, max_predictors, min_predictors, metric, output_file, device, max_batch_size = parse_arguments()
     if device == "gpu":
         print "Running calculations on GPU"
-        ordered_combs = find_best_models_gpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
+        ordered_combs = find_best_models_gpu(file_name=input_file, min_predictors=min_predictors, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
         print "Using GPU to do regressions took {}".format(time() - start_time)
     elif device == "cpu":
-        ordered_combs = find_best_models_cpu(file_name=input_file, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
+        ordered_combs = find_best_models_cpu(file_name=input_file, min_predictors=min_predictors, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
     df = pd.DataFrame(ordered_combs)
     df.to_csv("/tmp/{}".format(output_file))
 
