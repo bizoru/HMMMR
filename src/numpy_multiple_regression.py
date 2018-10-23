@@ -102,7 +102,7 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     for n_predictors in range(min_predictors, max_predictors):
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
         s_i = ncr(X.shape[1], n_predictors)  # Number of possible combinations
-        print "Doing regressions for {} predictors ({} regressions".format(n_predictors, s_i)
+        print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
         for comb in index_combinations:
             try:
                 regression = numpy_regression(X, comb, Y)
