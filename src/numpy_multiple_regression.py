@@ -96,7 +96,7 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     invalid_regressions = 0
     with open(file_name, 'rb') as f:
         col_names = np.array(f.readline().strip().split(','))
-    for n_predictors in range(min_predictors, max_predictors):
+    for n_predictors in range(min_predictors, max_predictors+1):
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
         s_i = ncr(X.shape[1]-1, n_predictors)  # Number of possible combinations
         print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)

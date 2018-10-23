@@ -201,7 +201,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     done_regressions = 0
     with open(file_name, 'rb') as f:
         col_names = np.array(f.readline().strip().split(','))
-    for n_predictors in range(min_predictors, max_predictors):
+    for n_predictors in range(min_predictors, max_predictors+1):
         _print_memory_usage("Initial State: ")
         max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
         iterator = get_combinatorial_iterator(X, n_predictors)
