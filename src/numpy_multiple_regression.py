@@ -16,9 +16,9 @@ def get_column_index_combinations(X, n=3):
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
     columns_index = range(X.shape[1])
-    combs = combinations(columns_index, n)
+    combs = combinations(range(X.shape[1] -1), n)
     for c in combs:
-        yield c
+        yield c + [columns_index[-1]]
 
 
 def get_X_matrices_from_combinations(X, index_combinations):
