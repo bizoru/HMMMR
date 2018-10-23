@@ -18,7 +18,7 @@ def get_column_index_combinations(X, n=3):
     columns_index = range(X.shape[1])
     combs = combinations(range(X.shape[1] -1), n)
     for c in combs:
-        yield c + [columns_index[-1]]
+        yield list(c) + [columns_index[-1]]
 
 
 def get_X_matrices_from_combinations(X, index_combinations):
@@ -103,7 +103,6 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         s_i = ncr(X.shape[1], n_predictors)  # Number of possible combinations
         print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
         for comb in index_combinations:
-            import ipdb; ipdb.set_trace()
             try:
                 regression = numpy_regression(X, comb, Y)
                 combinations_cols_names = np.array([col_names[x] for x in comb])
