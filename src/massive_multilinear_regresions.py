@@ -40,7 +40,7 @@ def parse_arguments():
     metric = args.metric
     device = args.device
 
-    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}-{}.csv".format(input_file, window, max_predictors, device)
+    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}-{}.csv".format(input_file.split("/")[-1], window, max_predictors, device)
 
     if any(x is None for x in [input_file, window, max_predictors, output_file, metric]):
         parser.print_help()
