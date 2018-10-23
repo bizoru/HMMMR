@@ -211,7 +211,6 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         print "Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size)
         i = 0
         for current_combinations in index_combinations:
-            import ipdb; ipdb.set_trace()
             print "Processing from {} to {} regressions in this batch".format(i, i + len(current_combinations))
             ss = time()
             Xs = get_X_matrices_from_combinations(X, current_combinations)
