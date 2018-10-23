@@ -206,7 +206,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
         iterator = get_combinatorial_iterator(X, n_predictors)
         index_combinations = get_column_index_combinations(iterator, X, max_batch_size=max_batch_size) # n predictors - 1 constant
-        s_i = ncr(X.shape[1], n_predictors) # Number of possible combinations
+        s_i = ncr(X.shape[1]-1, n_predictors) # Number of possible combinations
         print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
         print "Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size)
         i = 0
