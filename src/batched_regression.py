@@ -236,7 +236,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             else:
                combs_rmse = np.vstack((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
             i += len(current_combinations)
-        done_regressions += len(current_combinations)
+            done_regressions += len(current_combinations)
     print "{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te)
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs
