@@ -3,23 +3,37 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
+from hmmmr.utils.math import ncr
 
 FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
 
-def get_column_index_combinations(X, n=3):
+
+def get_combinatorial_iterator(X, n=3):
+    columns_index = range(X.shape[1] - 1)
+    combs = combinations(columns_index, n)
+    return combs
+
+def get_column_index_combinations(iterator, X, max_batch_size=1000):
     """
     Generates a list of possible predictor combinations, note the last column will be included since it  is the constant var
     :param X: Matrix with predictors data
     :param n: Number of predictors to include
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
+    max_batch_size = int(max_batch_size)
+    print "Generating {} combs for this batch".format(max_batch_size)
     columns_index = range(X.shape[1])
-    combs = combinations(columns_index, n)
-    full_combs = []
-    for c in combs:
-        full_combs.append(list(c) + [columns_index[-1]])
-    return full_combs
+    current_combs = []
+    counter = 0
+    for c in iterator:
+        current_combs.append(list(c) + [columns_index[-1]])
+        counter += 1
+        if counter % max_batch_size == 0:
+            yield current_combs
+            current_combs = []
+	    
+    yield current_combs
 
 
 def get_X_matrices_from_combinations(X, index_combinations):
@@ -165,7 +179,7 @@ def _get_max_batch_size(cols, n_data):
     return max_batch
 
 
-def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', max_predictors=4, metric=None,  window=None, handle=None):
+def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', min_predictors=1, max_predictors=4, metric=None,  window=None, handle=None, max_batch_size=None, **kwargs):
     """
 
     :param file_name: File name containing data, the format is the following
@@ -187,39 +201,42 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     done_regressions = 0
     with open(file_name, 'rb') as f:
         col_names = np.array(f.readline().strip().split(','))
-    for n_predictors in range(1, max_predictors):
+    for n_predictors in range(min_predictors, max_predictors):
         _print_memory_usage("Initial State: ")
         max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
-        index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
-        print "Doing regressions for {} predictors ({} regressions)".format(n_predictors, len(index_combinations))
-        print "Number of possible combinations are {}, batch size is {}".format(len(index_combinations), max_batch_size)
-        for i in range(0, len(index_combinations), max_batch_size):
-            end_combination = i + max_batch_size if len(index_combinations)>=i + max_batch_size else len(index_combinations)
-            print "Processing from {} to {} regressions in this batch".format(i, end_combination)
+        iterator = get_combinatorial_iterator(X, n_predictors)
+        index_combinations = get_column_index_combinations(iterator, X, max_batch_size=max_batch_size) # n predictors - 1 constant
+        s_i = ncr(X.shape[1], n_predictors) # Number of possible combinations
+        print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
+        print "Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size)
+        i = 0
+        for current_combinations in index_combinations:
+            print "Processing from {} to {} regressions in this batch".format(i, i + len(current_combinations))
             ss = time()
-            Xs = get_X_matrices_from_combinations(X, index_combinations[i:end_combination])
-            XTs = get_Xt_matrices_from_combinations(X.T, index_combinations[i:end_combination])
-            YsObs = get_Ys_matrices(Y, len(index_combinations[i:end_combination]))
+            Xs = get_X_matrices_from_combinations(X, current_combinations)
+            XTs = get_Xt_matrices_from_combinations(X.T, current_combinations)
+            YsObs = get_Ys_matrices(Y, len(current_combinations))
             te += time() - ss
             ss = time()
             regression_results = massive_multilineal_regresion(Xs, XTs, YsObs, handle=handle)
             tt += time() - ss
-            # regression_results['predictors_combinations'] = np.array(index_combinations[i:end_combination], dtype=np.int32)
+            regression_results['predictors_combinations'] = np.array(current_combinations, dtype=np.int32)
             # If the matrix had not inverse then the model is invalid
             invalid_models = np.where(regression_results['inv_results'].get() != 0)[0]
             print "For this batch {} models are invalid".format(len(invalid_models))
             # Cleaning invalid model results
-            # regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
-            # regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
-            # regression_results['rmse'] = np.delete(regression_results['rmse'], invalid_models, 0)
-            # regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
-            # regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
-            # combinations_cols_names = np.array([col_names[x] for x in regression_results['predictors_combinations']])
-            #if combs_rmse is None:
-            #    combs_rmse = np.array(list(zip(combinations_cols_names, regression_results['rmse'])))
-            #else:
-            #    combs_rmse = np.concatenate((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
-        done_regressions += len(index_combinations)
+            regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
+            regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
+            regression_results['rmse'] = np.delete(regression_results['rmse'], invalid_models, 0)
+            regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
+            regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
+            combinations_cols_names = np.array([col_names[x] for x in regression_results['predictors_combinations']])
+            if combs_rmse is None:
+               combs_rmse = np.array(list(zip(combinations_cols_names, regression_results['rmse'])))
+            else:
+               combs_rmse = np.vstack((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
+            i += len(current_combinations)
+            done_regressions += len(current_combinations)
     print "{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te)
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs

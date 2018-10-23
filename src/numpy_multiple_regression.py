@@ -3,6 +3,7 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
+from hmmmr.utils.math import ncr
 
 FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
@@ -15,11 +16,9 @@ def get_column_index_combinations(X, n=3):
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
     columns_index = range(X.shape[1])
-    combs = combinations(columns_index, n)
-    full_combs = []
+    combs = combinations(range(X.shape[1] -1), n)
     for c in combs:
-        full_combs.append(list(c) + [columns_index[-1]])
-    return full_combs
+        yield list(c) + [columns_index[-1]]
 
 
 def get_X_matrices_from_combinations(X, index_combinations):
@@ -58,7 +57,6 @@ def get_Ys_matrices(Y, n):
 def rmse(predictions, targets):
     return np.sqrt(((predictions - targets) ** 2).mean())
 
-
 def get_X_Xt_matrix(X, comb):
     X1 = X[:, comb]
     X1t = X1.T
@@ -77,7 +75,6 @@ def numpy_regression(X1, X1t, Y):
         'ys_sim': Ysim
     }
 
-
 def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', min_predictors=1, max_predictors=4, handle=None, **kwargs):
     """
 
@@ -91,7 +88,6 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     :param max_predictors: Max numbers of predictors to test in the regression. Should b N-2 at max
     :return: Ordered array (by RMSE) of tuples containing (predictors_combination, RMSE)
     """
-    handle = handle if handle else cublas.cublasCreate()
     XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=np.float32)
     X = np.delete(XY, XY.shape[1] - 1, 1)
     Y = XY[:, -1]
@@ -100,9 +96,10 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     invalid_regressions = 0
     with open(file_name, 'rb') as f:
         col_names = np.array(f.readline().strip().split(','))
-    for n_predictors in range(1, max_predictors):
+    for n_predictors in range(min_predictors, max_predictors):
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
-        print "Doing regressions for {} predictors ({} regressions)".format(n_predictors, len(index_combinations))
+        s_i = ncr(X.shape[1], n_predictors)  # Number of possible combinations
+        print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
         for comb in index_combinations:
             try:
                 X1, X1t = get_X_Xt_matrix(X, comb)
@@ -116,12 +113,7 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
                     combs_rmse = np.vstack([combs_rmse, result])
             except:
                 invalid_regressions += 1
-        done_regressions += len(index_combinations)
-
+        done_regressions += s_i
     print "{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions)
-    return None
-
-start_time = time()
-ordered_combs = find_best_models(file_name="/tmp/pronos_ordered_cleaned.csv", max_predictors=10)
-print "Using numpy to do regressions took {}".format(time() - start_time)
-
+    ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
+    return ordered_combs
