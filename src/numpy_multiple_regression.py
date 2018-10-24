@@ -99,7 +99,7 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     for n_predictors in range(min_predictors, max_predictors+1):
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
         s_i = ncr(X.shape[1]-1, n_predictors)  # Number of possible combinations
-        print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
+        sys.stdout.write("Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i))
         for comb in index_combinations:
             try:
                 X1, X1t = get_X_Xt_matrix(X, comb)
@@ -114,6 +114,6 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             except:
                 invalid_regressions += 1
         done_regressions += s_i
-    print "{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions)
+    sys.stdout.write("{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions))
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs

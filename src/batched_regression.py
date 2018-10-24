@@ -22,7 +22,7 @@ def get_column_index_combinations(iterator, X, max_batch_size=1000):
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
     max_batch_size = int(max_batch_size)
-    print "Generating {} combs for this batch".format(max_batch_size)
+    sys.stdout.write("Generating {} combs for this batch".format(max_batch_size))
     columns_index = range(X.shape[1])
     current_combs = []
     counter = 0
@@ -72,7 +72,7 @@ def _print_memory_usage(text="INFO"):
     mem_info = driver.mem_get_info()
     mem_used = mem_info[1] - mem_info[0]
     b_to_mb = 1024*1024.0
-    # print "{} \n Free memory {}MB, Used Memory {}MB, Total Memory {}MB".format(text, mem_info[0]/b_to_mb, mem_used/b_to_mb, mem_info[1]/b_to_mb)
+    # sys.stdout.write("{} \n Free memory {}MB, Used Memory {}MB, Total Memory {}MB".format(text, mem_info[0]/b_to_mb, mem_used/b_to_mb, mem_info[1]/b_to_mb))
 
 def rmse_metric(YsObs_gpu, YsSim_gpu, N_data, handle=None):
     handle = handle if handle else cublas.cublasCreate()
@@ -207,11 +207,11 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         iterator = get_combinatorial_iterator(X, n_predictors)
         index_combinations = get_column_index_combinations(iterator, X, max_batch_size=max_batch_size) # n predictors - 1 constant
         s_i = ncr(X.shape[1]-1, n_predictors) # Number of possible combinations
-        print "Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i)
-        print "Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size)
+        sys.stdout.write("Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i))
+        sys.stdout.write("Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size))
         i = 0
         for current_combinations in index_combinations:
-            print "Processing from {} to {} regressions in this batch".format(i, i + len(current_combinations))
+            sys.stdout.write("Processing from {} to {} regressions in this batch".format(i, i + len(current_combinations)))
             ss = time()
             Xs = get_X_matrices_from_combinations(X, current_combinations)
             XTs = get_Xt_matrices_from_combinations(X.T, current_combinations)
@@ -223,7 +223,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             regression_results['predictors_combinations'] = np.array(current_combinations, dtype=np.int32)
             # If the matrix had not inverse then the model is invalid
             invalid_models = np.where(regression_results['inv_results'].get() != 0)[0]
-            print "For this batch {} models are invalid".format(len(invalid_models))
+            sys.stdout.write("For this batch {} models are invalid".format(len(invalid_models)))
             # Cleaning invalid model results
             regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
             regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
@@ -237,7 +237,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
                combs_rmse = np.vstack((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
             i += len(current_combinations)
             done_regressions += len(current_combinations)
-    print "{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te)
+    sys.stdout.write("{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te))
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs
 

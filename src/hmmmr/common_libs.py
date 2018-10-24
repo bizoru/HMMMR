@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 try:
     from pycuda import cumath, driver, gpuarray, tools
