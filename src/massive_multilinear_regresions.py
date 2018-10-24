@@ -40,7 +40,7 @@ def parse_arguments():
     metric = args.metric
     device = args.device
 
-    output_file = args.ouput_file if args.output_file else "{}-w{}-mp{}-{}.csv".format(input_file.split("/")[-1], window, max_predictors, device)
+    output_file = args.ouput_file if args.output_file else "/tmp/{}-w{}-mp{}-{}.csv".format(input_file.split("/")[-1], window, max_predictors, device)
 
     if any(x is None for x in [input_file, window, max_predictors, output_file, metric]):
         parser.print_help()
@@ -60,8 +60,8 @@ def perform_regressions():
         print "Using GPU to do regressions took {}".format(time() - start_time)
     elif device == "cpu":
         ordered_combs = find_best_models_cpu(file_name=input_file, min_predictors=min_predictors, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size)
-    #df = pd.DataFrame(ordered_combs)
-    #df.to_csv("/tmp/{}".format(output_file))
+    df = pd.DataFrame(ordered_combs)
+    df.to_csv(output_file)
 
 
 perform_regressions()
