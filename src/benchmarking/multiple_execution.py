@@ -28,7 +28,7 @@ def execute_metrics_collection(full_output_path):
         os.system('mkdir -p {}'.format(path))
     cpu_command = "sar -P ALL 1 99999 > {}/sar_cpu_file.log".format(path)
     memio_command = "sar -b -r 1 99999 > {}/sar_mem_io_file.log".format(path)
-    base_command = "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --id=05:00.0 --format=csv -l 1"
+    base_command = "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --id=04:00.0 --format=csv -l 1"
 
     nvidia_command = "{} | ts %s, >> {}/nvidia_gpu.log ".format(base_command, path)
     process_cpu = subprocess.Popen("LC_TIME='C' exec " + cpu_command, shell=True)

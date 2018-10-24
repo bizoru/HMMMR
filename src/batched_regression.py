@@ -207,11 +207,11 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
         iterator = get_combinatorial_iterator(X, n_predictors)
         index_combinations = get_column_index_combinations(iterator, X, max_batch_size=max_batch_size) # n predictors - 1 constant
         s_i = ncr(X.shape[1]-1, n_predictors) # Number of possible combinations
-        sys.stdout.write("Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i))
-        sys.stdout.write("Number of possible combinations are {}, batch size is {}".format(s_i, max_batch_size))
+        sys.stdout.write("Doing regressions for {} predictors ({}) regressions\n".format(n_predictors, s_i))
+        sys.stdout.write("Number of possible combinations are {}, batch size is {}\n".format(s_i, max_batch_size))
         i = 0
         for current_combinations in index_combinations:
-            sys.stdout.write("Processing from {} to {} regressions in this batch".format(i, i + len(current_combinations)))
+            sys.stdout.write("Processing from {} to {} regressions in this batch\n".format(i, i + len(current_combinations)))
             ss = time()
             Xs = get_X_matrices_from_combinations(X, current_combinations)
             XTs = get_Xt_matrices_from_combinations(X.T, current_combinations)
