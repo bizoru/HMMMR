@@ -3,8 +3,9 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
-from hmmmr.utils.math import ncr
-from hmmmr.config import FLOAT_PRECISSION, FLOAT_PRECISSION_SIZE
+from hmmmr.config import FLOAT_PRECISSION
+from hmmmr.utils.math import ncr, ncr_sum
+
 
 def get_column_index_combinations(X, n=3):
     """
@@ -94,23 +95,24 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     invalid_regressions = 0
     with open(file_name, 'rb') as f:
         col_names = np.array(f.readline().strip().split(','))
+    total_regressions = ncr_sum(X.shape[1]-1, min_predictors, max_predictors+1)
+    sys.stdout.write("{} regressions will be performed\n".format(total_regressions))
+    combs_rmse = np.ndarray((total_regressions, 2), dtype=np.dtype('O'))
+    regression_idx = 0
     for n_predictors in range(min_predictors, max_predictors+1):
         index_combinations = get_column_index_combinations(X, n_predictors) # n predictors - 1 constant
         s_i = ncr(X.shape[1]-1, n_predictors)  # Number of possible combinations
-        sys.stdout.write("Doing regressions for {} predictors ({}) regressions".format(n_predictors, s_i))
+        sys.stdout.write("Doing regressions for {} predictors ({}) regressions\n".format(n_predictors, s_i))
         for comb in index_combinations:
             try:
                 X1, X1t = get_X_Xt_matrix(X, comb)
                 regression = numpy_regression(X1, X1t, Y)
                 combinations_cols_names = np.array([col_names[x] for x in comb])
                 result = np.array([[combinations_cols_names, regression['metric']]])
-
-                if combs_rmse is None:
-                    combs_rmse = result
-                else:
-                    combs_rmse = np.vstack([combs_rmse, result])
+                combs_rmse[regression_idx] = result
             except:
                 invalid_regressions += 1
+            regression_idx += 1
         done_regressions += s_i
     sys.stdout.write("{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions))
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
