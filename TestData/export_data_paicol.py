@@ -4,10 +4,10 @@
 ### Estaciones
 #### Objetivo
 #'21057060': PAICOL
-target = '21087080-WL_CAL_AVG'
+target = '21057060-WL_CAL_AVG'
 #### Predictoras
 # PAICOL
-preds_cod = ['21017060', '21017040' ,'21087080']
+preds_cod = ['21017060', '21017040' ,'21087080', '21057050', '21057060']
 # Removed PTE balseadero (Data hasta el 2015) 21047010
 ### Variables
 #--NOT-- PR_CAL_ACU -> Precipitacion acumulada horaria
@@ -49,6 +49,6 @@ ordered_columns[target_col_index] = ordered_columns[-1] # Replace  by last exist
 ordered_columns.pop() # And removed not used!
 cleaned_data['Ones'] = Series(np.ones(cleaned_data.shape[0]), index=cleaned_data.index)
 ordered_data = cleaned_data[ordered_columns+['Ones',target]].sort_index(ascending=False) # Recent data is most relevant
-data_window = 100
+data_window = 300
 ordered_data = ordered_data[:data_window]
 ordered_data.to_csv("/tmp/pronos_ordered_cleaned.csv", index=False)

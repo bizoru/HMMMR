@@ -3,10 +3,10 @@ from time import time
 
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
+from hmmmr.config import FLOAT_PRECISSION, FLOAT_PRECISSION_SIZE
 from hmmmr.utils.math import ncr
 
-FLOAT_PRECISSION = np.float64
-FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
+
 
 
 def get_combinatorial_iterator(X, n=3):
@@ -194,7 +194,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     """
     tt = te = 0 # total time
     handle = handle if handle else cublas.cublasCreate()
-    XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=np.float32)
+    XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
     X = np.delete(XY, XY.shape[1] - 1, 1)
     Y = XY[:, -1]
     combs_rmse = None
