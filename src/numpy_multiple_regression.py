@@ -4,9 +4,7 @@ from time import time
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
 from hmmmr.utils.math import ncr
-
-FLOAT_PRECISSION = np.float64
-FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes
+from hmmmr.config import FLOAT_PRECISSION, FLOAT_PRECISSION_SIZE
 
 def get_column_index_combinations(X, n=3):
     """
@@ -88,7 +86,7 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     :param max_predictors: Max numbers of predictors to test in the regression. Should b N-2 at max
     :return: Ordered array (by RMSE) of tuples containing (predictors_combination, RMSE)
     """
-    XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=np.float32)
+    XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
     X = np.delete(XY, XY.shape[1] - 1, 1)
     Y = XY[:, -1]
     combs_rmse = None
