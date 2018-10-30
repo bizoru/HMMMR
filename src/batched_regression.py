@@ -22,7 +22,7 @@ def get_column_index_combinations(iterator, X, max_batch_size=1000):
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
     max_batch_size = int(max_batch_size)
-    sys.stdout.write("Generating {} combs for this batch".format(max_batch_size))
+    sys.stdout.write("Generating {} combs for this batch\n".format(max_batch_size))
     columns_index = range(X.shape[1])
     current_combs = []
     counter = 0
@@ -237,7 +237,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
                combs_rmse = np.vstack((combs_rmse, np.array(list(zip(combinations_cols_names, regression_results['rmse'])))))
             i += len(current_combinations)
             done_regressions += len(current_combinations)
-    sys.stdout.write("{} Regressions has been done, tt {}, te: {}".format(done_regressions, tt, te))
+    sys.stdout.write("{} Regressions has been done, tt {}, te: {}\n".format(done_regressions, tt, te))
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs
 

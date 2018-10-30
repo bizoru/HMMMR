@@ -65,7 +65,7 @@ def kill_processes(pids):
 def execute_assesment(num_predictors, device, input_file):
     params = {'input_file': input_file, 'num_predictors': num_predictors, 'device': device}
 
-    full_output_path = os.path.join("maxpredictors-{}-device-{}/".format(str(num_predictors), device))
+    full_output_path = os.path.join("input-{}-maxpredictors-{}-device-{}/".format(input_file.split("/")[-1], str(num_predictors), device))
 
     print full_output_path
     os.system('mkdir -p {}'.format(full_output_path))

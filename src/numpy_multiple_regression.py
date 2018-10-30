@@ -116,6 +116,6 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             regression_idx += 1
         # import ipdb; ipdb.set_trace()
         done_regressions += s_i
-    sys.stdout.write("{} Regressions has been done, {} invalid".format(done_regressions, invalid_regressions))
+    sys.stdout.write("{} Regressions has been done, {} invalid\n".format(done_regressions, invalid_regressions))
     ordered_combs = combs_rmse[combs_rmse[:, 1].argsort()]
     return ordered_combs
