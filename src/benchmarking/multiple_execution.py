@@ -14,12 +14,12 @@ def parse_arguments():
                         help="Max number of predictors for each benchmark. Default value: 3")
     parser.add_argument('--devices', dest="devices", default="gpu",
                         help="Devices used to perform regression, can be cpu, gpu or both")
-    parser.add_argument('--input_file', dest="input_file", help="File containing predictors and target data")
+    parser.add_argument('--input_files', dest="input_files", help="File containing predictors and target data (Comma separated list)")
     args = parser.parse_args()
     num_predictors = args.num_predictors.split(",")
     devices = args.devices.split(",")
-    input_file = args.input_file
-    return num_predictors, devices, input_file
+    input_files = args.input_files.split(",")
+    return num_predictors, devices, input_files
 
 def execute_metrics_collection(full_output_path):
     # This should be async
@@ -91,10 +91,11 @@ def execute_assesment(num_predictors, device, input_file):
 
 
 def main():
-    num_predictors, devices, input_file = parse_arguments()
-    for np in num_predictors:
-        for device in devices:
-            execute_assesment(np, device, input_file)
+    num_predictors, devices, input_files = parse_arguments()
+    for input_file in input_files:
+        for np in num_predictors:
+            for device in devices:
+                execute_assesment(np, device, input_file)
 
 if __name__ == '__main__':
     main()
