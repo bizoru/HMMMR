@@ -95,7 +95,7 @@ def rmse_metric(YsObs_gpu, YsSim_gpu, N_data, handle=None):
 
 
 
-def massive_multilineal_regresion(Xs, XTs, Ys, handle=None):
+def massive_multilineal_regresion(Xs, XTs, Ys, handle=None, only_metric=True):
     """
     Calculates a linear regression using Nvidia computing power!
         n = number of models
@@ -152,11 +152,15 @@ def massive_multilineal_regresion(Xs, XTs, Ys, handle=None):
     rmse_gpu = rmse_metric(YsObs_gpu, YsSim_gpu, N_data, handle)
     _print_memory_usage("After RMSE")
 
-    results = {'beta_coefficients': Bs_gpu.get(), 'ys_obs': YsObs_gpu.get(),
-               'ys_sim': YsSim_gpu.get(), 'rmse': rmse_gpu.get().flatten(), 'inv_results': inv_returns}
     del(Xs)
     del(XTs)
     del(YsObs)
+
+    results = {'rmse': rmse_gpu.get().flatten(), 'inv_results': inv_returns}
+
+    if not only_metric:
+        results.update({'beta_coefficients': Bs_gpu.get(), 'ys_obs': YsObs_gpu.get(),
+                       'ys_sim': YsSim_gpu.get()})
     return results
 
 
@@ -229,7 +233,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             sys.stdout.write("For this batch {} models are invalid".format(len(invalid_models)))
             # Cleaning invalid model results
             regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
-            regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
+            # regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
             regression_results['rmse'] = np.delete(regression_results['rmse'], invalid_models, 0)
             # regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
             # regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
