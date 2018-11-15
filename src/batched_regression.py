@@ -154,6 +154,9 @@ def massive_multilineal_regresion(Xs, XTs, Ys, handle=None):
 
     results = {'beta_coefficients': Bs_gpu.get(), 'ys_obs': YsObs_gpu.get(),
                'ys_sim': YsSim_gpu.get(), 'rmse': rmse_gpu.get().flatten(), 'inv_results': inv_returns}
+    del(Xs)
+    del(XTs)
+    del(YsObs)
     return results
 
 
@@ -228,8 +231,8 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
             regression_results['predictors_combinations'] = np.delete(regression_results['predictors_combinations'], invalid_models, 0)
             regression_results['beta_coefficients'] = np.delete(regression_results['beta_coefficients'], invalid_models, 0)
             regression_results['rmse'] = np.delete(regression_results['rmse'], invalid_models, 0)
-            regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
-            regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
+            # regression_results['ys_sim'] = np.delete(regression_results['ys_sim'], invalid_models, 0)
+            # regression_results['ys_obs'] = np.delete(regression_results['ys_obs'], invalid_models, 0)
             combinations_cols_names = np.array([col_names[x] for x in regression_results['predictors_combinations']])
             if combs_rmse is None:
                combs_rmse = np.array(list(zip(combinations_cols_names, regression_results['rmse'])))
