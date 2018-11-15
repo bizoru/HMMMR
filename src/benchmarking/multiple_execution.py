@@ -39,7 +39,7 @@ def execute_metrics_collection(full_output_path):
 def execute_massive_regressions(params):
     # Sync
     params['output_path'] = "{output_path}/output.csv".format(**params)
-    command = "python ../massive_multilinear_regresions.py -i {input_file} -mp {num_predictors} -d {device} -o {output_path}".format(**params)
+    command = "python -u ../massive_multilinear_regresions.py -i {input_file} -mp {num_predictors} -d {device} -o {output_path}".format(**params)
     command += " | ts %s, > {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
