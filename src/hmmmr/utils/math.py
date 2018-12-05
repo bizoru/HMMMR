@@ -1,3 +1,4 @@
+import sys
 import operator as op
 from itertools import combinations
 
@@ -21,10 +22,16 @@ def get_column_index_combinations(X, n, max_batch_size=1, add_constant=True):
     :return: List of combinations, each combination is of n+1 size since it aggregates the last column
     """
     max_batch_size = int(max_batch_size)
-    sys.stdout.write("Generating {} combs for this batch\n".format(max_batch_size))
+    total_predictors = X.shape[1]-1
+    total_combinations = ncr(total_predictors, n)
+
+    sys.stdout.write("Generating {} combinations for {} predictors with n={} and the max batch size is {} \n"
+                     .format(total_combinations, total_predictors, n, max_batch_size))
+    # At this point X has the constant included
     columns_index = range(X.shape[1])
+
     # Exclude the constant from the possible combinations , the constant will be in ALL OR NONE models
-    iterator = combinations(len(columns_index) - 1, n)
+    iterator = combinations(range(X.shape[1]-1), n)
     current_combs = []
     counter = 0
     for c in iterator:

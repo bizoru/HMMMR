@@ -39,20 +39,17 @@ def find_best_models_cpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     :param max_predictors: Max numbers of predictors to test in the regression. Should b N-1 at max
     :return: Ordered array (by RMSE) of tuples containing (predictors_combination, RMSE)
     """
-    X, Y = load_x_y_from_csv(file_name, delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
-    combs_rmse = None
+    X, Y, col_names = load_x_y_from_csv(file_name, delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
     done_regressions = 0
     invalid_regressions = 0
-    with open(file_name, 'rb') as f:
-        col_names = np.array(f.readline().strip().split(','))
-    total_regressions = ncr_sum(X.shape[1]-1, min_predictors, max_predictors+1)
-    sys.stdout.write("{} regressions will be performed\n".format(total_regressions))
+
+    max_predictors = min(X.shape[1],max_predictors+1)
+    total_regressions = ncr_sum(X.shape[1]-1, min_predictors, max_predictors)
     combs_rmse = np.ndarray((total_regressions, 2), dtype=np.dtype('O'))
     regression_idx = 0
-    for n_predictors in range(min_predictors, max_predictors+1):
+    for n_predictors in range(min_predictors, max_predictors):
         index_combinations = get_column_index_combinations(X, n_predictors, max_batch_size=1, add_constant=add_constant)
         s_i = ncr(X.shape[1]-1, n_predictors)  # Number of possible combinations
-        sys.stdout.write("Doing regressions for {} predictors ({}) regressions\n".format(n_predictors, s_i))
         for comb in index_combinations:
             try:
                 X1, X1t = get_X_Xt_matrix(X, comb)

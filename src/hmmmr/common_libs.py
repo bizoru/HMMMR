@@ -1,5 +1,5 @@
 import numpy as np
-import sys
+import sys as sys
 
 try:
     from pycuda import cumath, driver, gpuarray, tools
@@ -7,4 +7,4 @@ try:
     from scikits.cuda import cublas
     import pycuda.autoinit
 except Exception as e:
-    print "Exception raised when loading pycuda libraries"
+    sys.stderr.write("WARNING: Pycuda or cublas was not found on python path\n")
