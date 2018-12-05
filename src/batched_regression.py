@@ -174,19 +174,14 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     tt = te = 0 # total time
     handle = handle if handle else cublas.cublasCreate()
 
-    X, Y = load_x_y_from_csv(file_name, delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
-
-    combs_rmse = None
+    X, Y, col_names = load_x_y_from_csv(file_name, delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
     done_regressions = 0
-    with open(file_name, 'rb') as f:
-        col_names = np.array(f.readline().strip().split(','))
+    combs_rmse = None
     for n_predictors in range(min_predictors, max_predictors+1):
         _print_memory_usage("Initial State: ")
         max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
         index_combinations = get_column_index_combinations(X, n_predictors, max_batch_size=max_batch_size, add_constant=add_constant)
         s_i = ncr(X.shape[1]-1, n_predictors) # Number of possible combinations
-        sys.stdout.write("Doing regressions for {} predictors ({}) regressions\n".format(n_predictors, s_i))
-        sys.stdout.write("Number of possible combinations are {}, batch size is {}\n".format(s_i, max_batch_size))
         i = 0
         for current_combinations in index_combinations:
             sys.stdout.write("Processing from {} to {} regressions in this batch\n".format(i, i + len(current_combinations)))

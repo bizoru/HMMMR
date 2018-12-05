@@ -1,4 +1,4 @@
 import numpy as np
 
-FLOAT_PRECISSION = np.float32
+FLOAT_PRECISSION = np.float64
 FLOAT_PRECISSION_SIZE = FLOAT_PRECISSION(1.0).nbytes

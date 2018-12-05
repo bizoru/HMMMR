@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 
 total_regressions_pattern = re.compile("[0-9]+ Regressions has been done")
+to_pattern = re.compile("batch size is [0-9]+")
 
 
 def extract_regressions_from_log(logfile):
@@ -23,6 +24,13 @@ def extract_time_from_log(logfile, keyword):
     f.close()
     return line.split()[3]
 
+def extract_batch_size(logfile):
+    f = open(logfile, "r")
+    last_batch = ""
+    for line in f:
+        if "batch size" in line and not "sys" in line:
+            last_batch = line
+    return last_batch
 
 
 for log_dir in argv[1:]:
@@ -35,4 +43,6 @@ for log_dir in argv[1:]:
     print "CPU MEM {}".format(cpu_mem)
     print "Time {} ns".format(extract_time_from_log(log_dir+"/metrics/tool_log.csv", keyword))
     print "{}".format(extract_regressions_from_log(log_dir+"/metrics/tool_log.csv"))
+    if "gpu"  in log_dir:
+        print "{}".format(extract_batch_size(log_dir+"/metrics/tool_log.csv"))
     print "*********"*10
