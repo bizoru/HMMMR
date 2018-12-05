@@ -12,7 +12,7 @@ try:
                     profiler.enable_by_count()
                     return func(*args, **kwargs)
                 finally:
-                    profiler.print_stats()
+                    profilewr.print_stats()
             return profiled_func
         return inner
 

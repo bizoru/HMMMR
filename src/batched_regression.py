@@ -4,36 +4,8 @@ from time import time
 from hmmmr.batched_functions import *
 from hmmmr.common_libs import *
 from hmmmr.config import FLOAT_PRECISSION, FLOAT_PRECISSION_SIZE
-from hmmmr.utils.math import ncr
-
-
-
-
-def get_combinatorial_iterator(X, n=3):
-    columns_index = range(X.shape[1] - 1)
-    combs = combinations(columns_index, n)
-    return combs
-
-def get_column_index_combinations(iterator, X, max_batch_size=1000):
-    """
-    Generates a list of possible predictor combinations, note the last column will be included since it  is the constant var
-    :param X: Matrix with predictors data
-    :param n: Number of predictors to include
-    :return: List of combinations, each combination is of n+1 size since it aggregates the last column
-    """
-    max_batch_size = int(max_batch_size)
-    sys.stdout.write("Generating {} combs for this batch\n".format(max_batch_size))
-    columns_index = range(X.shape[1])
-    current_combs = []
-    counter = 0
-    for c in iterator:
-        current_combs.append(list(c) + [columns_index[-1]])
-        counter += 1
-        if counter % max_batch_size == 0:
-            yield current_combs
-            current_combs = []
-	    
-    yield current_combs
+from hmmmr.utils.math import ncr, get_column_index_combinations
+from hmmmr.utils.data_storage import load_x_y_from_csv
 
 
 def get_X_matrices_from_combinations(X, index_combinations):
@@ -186,24 +158,24 @@ def _get_max_batch_size(cols, n_data):
     return max_batch
 
 
-def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', min_predictors=1, max_predictors=4, metric=None,  window=None, handle=None, max_batch_size=None, **kwargs):
+def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv', min_predictors=1, max_predictors=4,
+                         metric=None,  window=None, handle=None, max_batch_size=None, add_constant=True, **kwargs):
     """
 
     :param file_name: File name containing data, the format is the following
-        Columns: Contains data for N-2 predictors, 1 column full of 1s and 1 column with outcome data
-            Columns 1 to N-2 contains predictors data
-            The N-1 column is always full of 1s (due the constant on the model)
+        Columns: Contains data for N-1 predictors, 1 column with outcome data
+            Columns 1 to N-1 contains predictors data
             The N column contains Y data
         Rows:  The first row contains the name of the predictor
             The next rows contains the observations (They need to be real values, no empty/nans are allowed
-    :param max_predictors: Max numbers of predictors to test in the regression. Should b N-2 at max
+    :param max_predictors: Max numbers of predictors to test in the regression. Should b N-1 at max
     :return: Ordered array (by RMSE) of tuples containing (predictors_combination, RMSE)
     """
     tt = te = 0 # total time
     handle = handle if handle else cublas.cublasCreate()
-    XY = np.loadtxt(open(file_name, "rb"), delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
-    X = np.delete(XY, XY.shape[1] - 1, 1)
-    Y = XY[:, -1]
+
+    X, Y = load_x_y_from_csv(file_name, delimiter=",", skiprows=1, dtype=FLOAT_PRECISSION)
+
     combs_rmse = None
     done_regressions = 0
     with open(file_name, 'rb') as f:
@@ -211,8 +183,7 @@ def find_best_models_gpu(file_name='../TestData/Y=2X1+3X2+4X3+5_with_shitty.csv'
     for n_predictors in range(min_predictors, max_predictors+1):
         _print_memory_usage("Initial State: ")
         max_batch_size = _get_max_batch_size(n_predictors+1, Y.size)
-        iterator = get_combinatorial_iterator(X, n_predictors)
-        index_combinations = get_column_index_combinations(iterator, X, max_batch_size=max_batch_size) # n predictors - 1 constant
+        index_combinations = get_column_index_combinations(X, n_predictors, max_batch_size=max_batch_size, add_constant=add_constant)
         s_i = ncr(X.shape[1]-1, n_predictors) # Number of possible combinations
         sys.stdout.write("Doing regressions for {} predictors ({}) regressions\n".format(n_predictors, s_i))
         sys.stdout.write("Number of possible combinations are {}, batch size is {}\n".format(s_i, max_batch_size))
