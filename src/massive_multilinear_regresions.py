@@ -1,8 +1,11 @@
+from __future__ import print_function
+
 import numpy as np
 import pyopencl as cl
 import sys
 import argparse
 import os
+import tempfile
 from time import time
 
 from batched_regression import _print_memory_usage, find_best_models_gpu
@@ -49,7 +52,11 @@ def parse_arguments():
         parser.print_help()
         sys.exit(0)
 
-    output_file = args.output_file if args.output_file else "/tmp/{}-w{}-mp{}-{}.csv".format(input_file.split("/")[-1], window, max_predictors, device)
+    safe_input = os.path.basename(input_file)
+    default_name = "{}-w{}-mp{}-{}.csv".format(
+        safe_input, window, max_predictors, device)
+    output_file = args.output_file if args.output_file else os.path.join(
+        tempfile.gettempdir(), default_name)
 
     return input_file, int(window), int(max_predictors), int(min_predictors), metric, output_file, device, max_batch_size, add_constant
 
@@ -61,9 +68,9 @@ def perform_regressions():
     input_file, window, max_predictors, min_predictors, metric, output_file, device, max_batch_size, add_constant = parse_arguments()
     sys.stdout.write("Processing file {}, results will be located on {} \n".format(input_file, output_file))
     if device == "gpu":
-        print "Running calculations on GPU"
+        print("Running calculations on GPU")
         ordered_combs = find_best_models_gpu(file_name=input_file, min_predictors=min_predictors, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size, add_constant=add_constant)
-        print "Using GPU to do regressions took {} \n".format(time() - start_time)
+        print("Using GPU to do regressions took {} \n".format(time() - start_time))
     elif device == "cpu":
         ordered_combs = find_best_models_cpu(file_name=input_file, min_predictors=min_predictors, max_predictors=max_predictors, metric=metric,  window=window, max_batch_size=max_batch_size, add_constant=add_constant)
     df = pd.DataFrame(ordered_combs[:10000], columns=["Predictors", "RMSE"])

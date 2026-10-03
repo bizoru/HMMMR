@@ -1,11 +1,15 @@
+from __future__ import print_function
+
 import argparse
 import os
-from shutil import copyfile
 import subprocess
 import sys
+
 from analyze_taken_metrics import merge_metrics
 
 CLEAR_MEM_SCRIPT_PATH = "clear_mem.sh"
+GPU_ID = "04:00.0"
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -14,72 +18,101 @@ def parse_arguments():
                         help="Max number of predictors for each benchmark. Default value: 3")
     parser.add_argument('--devices', dest="devices", default="gpu",
                         help="Devices used to perform regression, can be cpu, gpu or both")
-    parser.add_argument('--input_files', dest="input_files", help="File containing predictors and target data (Comma separated list)")
+    parser.add_argument('--input_files', dest="input_files",
+                        help="File containing predictors and target data (Comma separated list)")
     args = parser.parse_args()
     num_predictors = args.num_predictors.split(",")
     devices = args.devices.split(",")
     input_files = args.input_files.split(",")
     return num_predictors, devices, input_files
 
-def execute_metrics_collection(full_output_path):
-    # This should be async
-    path = os.path.join(full_output_path, "metrics")
-    if not os.path.exists(path):
-        os.system('mkdir -p {}'.format(path))
-    cpu_command = "sar -P ALL 1 99999 > {}/sar_cpu_file.log".format(path)
-    memio_command = "sar -b -r 1 99999 > {}/sar_mem_io_file.log".format(path)
-    base_command = "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --id=04:00.0 --format=csv -l 1"
 
-    nvidia_command = "{} | ts %s, >> {}/nvidia_gpu.log ".format(base_command, path)
-    process_cpu = subprocess.Popen("LC_TIME='C' exec " + cpu_command, shell=True)
-    process_memio = subprocess.Popen("LC_TIME='C' exec " +memio_command, shell=True)
-    process_nvidia = subprocess.Popen("LC_TIME='C' exec " +nvidia_command, shell=True)
+def _safe_dir_token(value):
+    """Allow only characters safe for a path component built from user input."""
+    return "".join(c for c in value if c.isalnum() or c in ("-", "_", "."))
+
+
+def _open_log(path):
+    return open(path, "ab")
+
+
+def execute_metrics_collection(full_output_path):
+    path = os.path.join(full_output_path, "metrics")
+    os.makedirs(path)
+
+    cpu_log = _open_log(os.path.join(path, "sar_cpu_file.log"))
+    memio_log = _open_log(os.path.join(path, "sar_mem_io_file.log"))
+    nvidia_log = _open_log(os.path.join(path, "nvidia_gpu.log"))
+
+    env = dict(os.environ, LC_TIME="C")
+    process_cpu = subprocess.Popen(
+        ["sar", "-P", "ALL", "1", "99999"], stdout=cpu_log, env=env)
+    process_memio = subprocess.Popen(
+        ["sar", "-b", "-r", "1", "99999"], stdout=memio_log, env=env)
+    process_nvidia = subprocess.Popen(
+        ["nvidia-smi",
+         "--query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used",
+         "--id=" + GPU_ID, "--format=csv", "-l", "1"],
+        stdout=nvidia_log, env=env)
     return process_cpu, process_memio, process_nvidia
 
+
 def execute_massive_regressions(params):
-    # Sync
-    params['output_path'] = "{output_path}/output.csv".format(**params)
-    command = "python -u ../massive_multilinear_regresions.py -i {input_file} -mp {num_predictors} -d {device} -o {output_path}".format(**params)
-    command += " | ts %s, > {log_output_path}".format(**params)
-    sys.stdout.write("Executing '{}' \n".format(command))
-    subprocess.call(command, shell=True)
+    output_file = os.path.join(params['output_path'], "output.csv")
+    params['output_path'] = output_file
+    log_output_path = params['log_output_path']
+    cmd = [
+        "python", "-u", "../massive_multilinear_regresions.py",
+        "-i", params['input_file'],
+        "-mp", str(params['num_predictors']),
+        "-d", params['device'],
+        "-o", output_file,
+    ]
+    sys.stdout.write("Executing {} \n".format(cmd))
+    with open(log_output_path, "ab") as log_fh:
+        subprocess.check_call(cmd, stdout=log_fh)
+
 
 def execute_sleep(seconds):
-    sleep_time =  seconds
-    command = "sleep {}".format(sleep_time)
-    subprocess.call("exec "+command, shell=True)
+    subprocess.check_call(["sleep", str(int(seconds))])
+
 
 def execute_metrics_summary(full_output_path):
     path = os.path.join(full_output_path, "metrics")
     sys.stdout.write("Mergin metrics in {}".format(path))
     merge_metrics(path, 1, "2017-12-09")
 
+
 def kill_processes(pids):
     sys.stdout.write("Killing metrics collection processes {}\n".format(pids))
-    subprocess.call("killall -9 sar", shell=True)
-    subprocess.call("killall -9 sar", shell=True)
-    subprocess.call("killall -9 nvidia-smi", shell=True)
-    subprocess.call("sudo sh {}".format(CLEAR_MEM_SCRIPT_PATH), shell=True)
+    subprocess.call(["killall", "-9", "sar"])
+    subprocess.call(["killall", "-9", "nvidia-smi"])
+    subprocess.call(["sudo", "sh", CLEAR_MEM_SCRIPT_PATH])
 
 
 def execute_assesment(num_predictors, device, input_file):
-    params = {'input_file': input_file, 'num_predictors': num_predictors, 'device': device}
+    params = {'input_file': input_file,
+              'num_predictors': num_predictors, 'device': device}
 
-    full_output_path = os.path.join("input-{}-maxpredictors-{}-device-{}/".format(input_file.split("/")[-1], str(num_predictors), device))
+    safe_input = _safe_dir_token(os.path.basename(input_file))
+    safe_device = _safe_dir_token(device)
+    safe_predictors = _safe_dir_token(str(num_predictors))
+    full_output_path = "input-{}-maxpredictors-{}-device-{}/".format(
+        safe_input, safe_predictors, safe_device)
 
-    print full_output_path
-    os.system('mkdir -p {}'.format(full_output_path))
-    os.system('mkdir -p {}/tmp'.format(full_output_path))
-    # Rewrite for specific output
+    print(full_output_path)
+    os.makedirs(os.path.join(full_output_path, "tmp"))
+
     params['output_path'] = full_output_path
-    params['log_output_path'] = os.path.join(full_output_path, "metrics", "tool_log.csv")
+    params['log_output_path'] = os.path.join(
+        full_output_path, "metrics", "tool_log.csv")
 
     process_cpu, process_memio, process_nvidia = execute_metrics_collection(full_output_path)
 
-    sys.stdout.write(" ***************************************** \n"\
-              "Execution performance assesment \n"\
-              "Output path {} \n"\
-              "***********************************\n".format(full_output_path))
+    sys.stdout.write(" ***************************************** \n"
+                     "Execution performance assesment \n"
+                     "Output path {} \n"
+                     "***********************************\n".format(full_output_path))
 
     sys.stdout.write("Letting metrics collection process to start \n")
     execute_sleep(3)
@@ -93,9 +126,10 @@ def execute_assesment(num_predictors, device, input_file):
 def main():
     num_predictors, devices, input_files = parse_arguments()
     for input_file in input_files:
-        for np in num_predictors:
+        for predictors in num_predictors:
             for device in devices:
-                execute_assesment(np, device, input_file)
+                execute_assesment(predictors, device, input_file)
+
 
 if __name__ == '__main__':
     main()

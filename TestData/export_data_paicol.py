@@ -17,6 +17,8 @@ siglas_vars =  ["WL_CAL_AVG", "PR_CAL_ITS"]
 #### Lags
 from emjav.emjav_data.tools import cargar_valores_observados
 from datetime import datetime, timedelta
+import os
+import tempfile
 import pandas as pd
 from pandas import Series
 import numpy as np
@@ -51,4 +53,8 @@ cleaned_data['Ones'] = Series(np.ones(cleaned_data.shape[0]), index=cleaned_data
 ordered_data = cleaned_data[ordered_columns+['Ones',target]].sort_index(ascending=False) # Recent data is most relevant
 data_window = 300
 ordered_data = ordered_data[:data_window]
-ordered_data.to_csv("/tmp/pronos_ordered_cleaned.csv", index=False)
+output_path = os.environ.get(
+    "PRONOS_OUTPUT_PATH",
+    os.path.join(tempfile.gettempdir(), "pronos_ordered_cleaned.csv"),
+)
+ordered_data.to_csv(output_path, index=False)
