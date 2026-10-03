@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hmmmr"
+version = "0.1.0"
+description = "Heterogenous model for massive multilinear regressions"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Cristian Rojas", email = "alejandro.0317@gmail.com" }]
+dependencies = [
+    "numpy>=1.16,<2.0",
+    "pandas>=0.24",
+]
+
+[project.optional-dependencies]
+gpu = [
+    "pycuda>=2018.1",
+    "scikit-cuda>=0.5.3",
+    "pyopencl>=2018.1",
+]
+dev = [
+    "bandit>=1.7",
+    "semgrep>=1.50",
+    "pip-audit>=2.6",
+    "ruff>=0.3",
+    "pytest>=7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+extend-select = ["B", "E", "F", "W", "I", "UP", "N"]
+ignore = ["E501"]
+
+[tool.bandit]
+skips = ["B101"]
+exclude_dirs = ["TestData"]

@@ -1,0 +1,7 @@
+numpy>=1.16,<2.0
+pandas>=0.24
+pycuda>=2018.1
+scikit-cuda>=0.5.3
+pyopencl>=2018.1
+openpyxl>=2.6
+line_profiler>=3.0

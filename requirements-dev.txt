@@ -1,0 +1,6 @@
+-r requirements.txt
+bandit>=1.7
+semgrep>=1.50
+pip-audit>=2.6
+ruff>=0.3
+pytest>=7.0
